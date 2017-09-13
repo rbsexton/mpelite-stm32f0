@@ -48,7 +48,7 @@
 #define __MAIN_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32072b_eval.h"
+#include "stm32f072b_discovery.h"
 #include "usbd_core.h"
 #include "usbd_desc.h"
 #include "usbd_cdc.h" 
