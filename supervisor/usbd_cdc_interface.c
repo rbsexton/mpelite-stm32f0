@@ -57,8 +57,8 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define APP_RX_DATA_SIZE  2048
-#define APP_TX_DATA_SIZE  2048
+#define APP_RX_DATA_SIZE  64
+#define APP_TX_DATA_SIZE  64
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -77,6 +77,10 @@ uint32_t UserTxBufPtrIn = 0;/* Increment this pointer or roll it back to
                                start address when data are received over USART */
 uint32_t UserTxBufPtrOut = 0; /* Increment this pointer or roll it back to
                                  start address when data are sent over USB */
+
+uint8_t *midbuf;
+int midbuf_len = 0;
+
 
 /* UART handler declaration */
 UART_HandleTypeDef UartHandle;
@@ -257,6 +261,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   uint32_t buffptr;
   uint32_t buffsize;
+
+  if ( midbuf ) {
+    USBD_CDC_SetTxBuffer(&USBD_Device, midbuf, midbuf_len);
+
+	if(USBD_CDC_TransmitPacket(&USBD_Device) == USBD_OK) {
+	   midbuf = 0;
+	   USBD_CDC_ReceivePacket(&USBD_Device);
+	BSP_LED_Toggle(LED_RED);
+	   }
+  	}
+  }
+#if 0 
   
   if(UserTxBufPtrOut != UserTxBufPtrIn)
   {
@@ -282,7 +298,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       }
     }
   }
-}
+
+#endif 
 
 /**
   * @brief  Rx Transfer completed callback
@@ -314,7 +331,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   */
 static int8_t CDC_Itf_Receive(uint8_t* Buf, uint32_t *Len)
 {
-  HAL_UART_Transmit_DMA(&UartHandle, Buf, *Len);
+	midbuf = Buf;
+	midbuf_len = *Len;	
+  // HAL_UART_Transmit_DMA(&UartHandle, Buf, *Len);
+  //	memcpy(midbuf, Buf,  )
+  BSP_LED_Toggle(LED_BLUE);
   return (USBD_OK);
 }
 

@@ -218,9 +218,9 @@ void Toggle_Leds(void)
   if(ticks++ == 100)
   {
     BSP_LED_Toggle(LED_GREEN);
-    BSP_LED_Toggle(LED_ORANGE);
-    BSP_LED_Toggle(LED_RED);
-    BSP_LED_Toggle(LED_BLUE);
+    // BSP_LED_Toggle(LED_ORANGE);
+    // BSP_LED_Toggle(LED_RED);
+    // BSP_LED_Toggle(LED_BLUE);
     ticks = 0;
   }  
 }
