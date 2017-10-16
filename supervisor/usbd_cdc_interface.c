@@ -43,8 +43,23 @@
   ******************************************************************************
   */
 
+
+/* Notes on integration with Forth/Sockepuppet
+When data comes in from the USB host, there isn't really anything
+that we can do with it besides save it for later.  Forth will have to collect
+it later.   The ringbuffer creates the back-pressure.   Likewise, the outgoing
+ringbuffer accumumates characters, and generates USB frames when we get 
+a newline or the buffer fills up.
+
+*/
+
+
+
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
+#include "ringbuffer.h"
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
   * @{
@@ -81,6 +96,15 @@ uint32_t UserTxBufPtrOut = 0; /* Increment this pointer or roll it back to
 uint8_t *midbuf;
 int midbuf_len = 0;
 
+
+/* Sockpuppet Ringbuffers */
+RINGBUF rb_ep_OUT; // UserRxBuffer
+RINGBUF rb_ep_IN;  // UserTxBuffer
+
+// This only needs to be big enough to guarantee room for a single packet 
+// from the host.
+uint8_t rb_storage_out[APP_RX_DATA_SIZE];
+uint8_t rb_storage_in[APP_TX_DATA_SIZE];
 
 /* UART handler declaration */
 UART_HandleTypeDef UartHandle;
@@ -162,6 +186,10 @@ static int8_t CDC_Itf_Init(void)
   USBD_CDC_SetTxBuffer(&USBD_Device, UserTxBuffer, 0);
   USBD_CDC_SetRxBuffer(&USBD_Device, UserRxBuffer);
   
+
+	ringbuffer_init(&rb_ep_IN,&rb_storage_in,sizeof(rb_storage_in) );
+	ringbuffer_init(&rb_ep_OUT,&rb_storage_out,sizeof(rb_storage_out) );		
+
   return (USBD_OK);
 }
 
@@ -259,18 +287,26 @@ static int8_t CDC_Itf_Control (uint8_t cmd, uint8_t* pbuf, uint16_t length)
   */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  uint32_t buffptr;
-  uint32_t buffsize;
+  // uint32_t buffptr;
+  // uint32_t buffsize;
 
-  if ( midbuf ) {
-    USBD_CDC_SetTxBuffer(&USBD_Device, midbuf, midbuf_len);
+  if ( ringbuffer_used(&rb_ep_IN) ) {
+	// Try and take a maximal bite.
+	int count = ringbuffer_getbulkcount(&rb_ep_IN);
+	USBD_CDC_SetTxBuffer(&USBD_Device,
+	 		ringbuffer_getbulkpointer(&rb_ep_IN),
+			count);
 
+	// On Successful transmission pull it from the buffer.
 	if(USBD_CDC_TransmitPacket(&USBD_Device) == USBD_OK) {
-	   midbuf = 0;
-	   USBD_CDC_ReceivePacket(&USBD_Device);
+		ringbuffer_bulkremove(&rb_ep_IN,count);
+		}
+
 	BSP_LED_Toggle(LED_RED);
-	   }
-  	}
+	}
+			
+	//    USBD_CDC_ReceivePacket(&USBD_Device);
+
   }
 #if 0 
   
@@ -336,6 +372,23 @@ static int8_t CDC_Itf_Receive(uint8_t* Buf, uint32_t *Len)
   // HAL_UART_Transmit_DMA(&UartHandle, Buf, *Len);
   //	memcpy(midbuf, Buf,  )
   BSP_LED_Toggle(LED_BLUE);
+
+	// See if there is room for the data, and if so, 
+	// add it to the ringbuffer.
+	if ( ringbuffer_free(&rb_ep_OUT) > *Len ) {
+		uint8_t *c = Buf;
+		int i = *Len;
+		while(i) {
+			ringbuffer_addchar(&rb_ep_OUT,*c);
+			c++; i--;
+			}
+		// Now we've moved the data, ask for more.
+		USBD_CDC_ReceivePacket(&USBD_Device);
+		}
+	else {
+		// We wind up here if there is no space available.
+		// The Correct thing to do is to set a bit of state.
+		}
   return (USBD_OK);
 }
 

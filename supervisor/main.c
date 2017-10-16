@@ -46,6 +46,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"  
 
+#include "ringbuffer.h"
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -56,6 +58,9 @@ USBD_HandleTypeDef USBD_Device;
 static void SystemClock_Config(void);
 
 /* Private functions ---------------------------------------------------------*/
+
+extern RINGBUF rb_ep_OUT; // UserRxBuffer
+extern RINGBUF rb_ep_IN;  // UserTxBuffer
 
 /**
   * @brief  Main program
@@ -98,6 +103,9 @@ int main(void)
   
   while (1)
   {
+	// Run it through the ringbuffer system.
+	int c = ringbuffer_getchar(&rb_ep_OUT);
+	if ( c >= 0 ) ringbuffer_addchar(&rb_ep_IN, c);
   }
 }
 

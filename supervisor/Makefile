@@ -21,7 +21,7 @@ EXE_DIR = exe
 LST_DIR = lst
 
 SDK=STM32Cube_FW_F0_V1.8.0
-CM3LIB=../../../cm3lib
+CM3LIB=./cm3lib
 SAPI=../../../sockpuppet/sapi
 
 ####################################################################
@@ -166,11 +166,11 @@ Drivers/BSP/STM32F072B-Discovery/stm32f072b_discovery.c \
 Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c \
-Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c 
+Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \
+$(CM3LIB)/ringbuffer.c 
 
-# $(CM3LIB)/ringbuffer.c \
 # $(SAPI)/pendsv-launcher.c \
-# ./systemcalls.c 
+./systemcalls.c 
 
 
 s_SRC += startup_stm32f072xb.s
