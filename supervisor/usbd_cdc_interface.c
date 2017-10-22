@@ -57,6 +57,9 @@ a newline or the buffer fills up.
 
 
 /* Includes ------------------------------------------------------------------*/
+#include <stdint.h>
+#include <stdbool.h>
+
 #include "main.h"
 
 #include "ringbuffer.h"
@@ -131,6 +134,23 @@ USBD_CDC_ItfTypeDef USBD_CDC_fops =
   CDC_Itf_Receive
 };
 
+
+int USBGetCharAvail(int stream) {
+	return(ringbuffer_used(&rb_ep_OUT) );
+	}
+	
+int USBGetChar(int stream,unsigned long *tcb) {
+	return(ringbuffer_getchar(&rb_ep_OUT));
+	}
+
+bool USBPutChar(int stream, uint8_t c, unsigned long *tcb) {
+	bool ret = (ringbuffer_addchar(&rb_ep_IN, c) == 0);
+	return(ret);
+	}
+
+	
+
+
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -187,8 +207,8 @@ static int8_t CDC_Itf_Init(void)
   USBD_CDC_SetRxBuffer(&USBD_Device, UserRxBuffer);
   
 
-	ringbuffer_init(&rb_ep_IN,&rb_storage_in,sizeof(rb_storage_in) );
-	ringbuffer_init(&rb_ep_OUT,&rb_storage_out,sizeof(rb_storage_out) );		
+	ringbuffer_init(&rb_ep_IN,rb_storage_in,sizeof(rb_storage_in) );
+	ringbuffer_init(&rb_ep_OUT,rb_storage_out,sizeof(rb_storage_out) );		
 
   return (USBD_OK);
 }

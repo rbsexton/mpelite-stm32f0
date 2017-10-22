@@ -44,9 +44,12 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+#include <stdbool.h>
+
 #include "main.h"  
 
 #include "ringbuffer.h"
+#include "syscall-testshims.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -103,9 +106,27 @@ int main(void)
   
   while (1)
   {
-	// Run it through the ringbuffer system.
-	int c = ringbuffer_getchar(&rb_ep_OUT);
-	if ( c >= 0 ) ringbuffer_addchar(&rb_ep_IN, c);
+	// Run it through the ringbuffer system. 
+	// int c = ringbuffer_getchar(&rb_ep_OUT);
+	// if ( c >= 0 ) ringbuffer_addchar(&rb_ep_IN, c);
+
+	// if ( ringbuffer_used(&rb_ep_OUT) ) {
+	//	int c = ringbuffer_getchar(&rb_ep_OUT);
+	//	ringbuffer_addchar(&rb_ep_IN, c);	
+	//	}
+	
+#if 0	
+	if (USBGetCharAvail(10,0)) {
+		int c = USBGetChar(10,0);
+		USBPutChar(10,c,0);
+		}
+#endif
+
+	if (GetCharAvail(10)) {
+		int c = GetChar(10,0);
+		PutChar(10,c,0);
+		}
+	
   }
 }
 

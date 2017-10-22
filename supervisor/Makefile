@@ -22,7 +22,7 @@ LST_DIR = lst
 
 SDK=STM32Cube_FW_F0_V1.8.0
 CM3LIB=./cm3lib
-SAPI=../../../sockpuppet/sapi
+SAPI=../../sockpuppet/sapi
 
 ####################################################################
 # Definitions of toolchain.                                        #
@@ -125,22 +125,15 @@ INCLUDEPATHS += \
 -IDrivers/CMSIS/Include/ \
 -IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc \
 -IMiddlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc \
--I$(CM3LIB) 
-
-# -I$(GECKOLIB) \
-# -I$(SDK)/CMSIS/Include \
-# -I$(SDK)/Device/SiliconLabs/EFM32LG/Include \
-# -I$(SDK)/emlib/inc \
-# -I$(SDK)/usb/inc \
-# -I$(SDK)/kits/common/drivers \
-# -I$(SDK)/kits/common/bsp \
-# -I$(SDK)/kits/EFM32LG_STK3600/config \
-# -I../../../sockpuppet/sapi
+-I$(CM3LIB) \
+-I$(SAPI) 
 
 ####################################################################
 # Files                                                            #
 ####################################################################
-
+s_SRC += startup_stm32f072xb.s
+s_SRC += $(SAPI)/svchandler-m0.s  svchandler-table.s 
+s_SRC += $(SAPI)/syscall-testshims.s 
 
 C_SRC +=  \
 main.c \
@@ -150,6 +143,7 @@ system_stm32f0xx.c \
 usbd_cdc_interface.c \
 usbd_conf.c \
 usbd_desc.c \
+systemcalls.c \
 Drivers/Src/stm32f0xx_hal_cortex.c \
 Drivers/Src/stm32f0xx_hal_dma.c \
 Drivers/Src/stm32f0xx_hal_gpio.c \
@@ -173,10 +167,9 @@ $(CM3LIB)/ringbuffer.c
 ./systemcalls.c 
 
 
-s_SRC += startup_stm32f072xb.s
 
-S_SRC +=  
-# S_SRC += ${SAPI}/svchandler.S  
+# S_SRC +=  
+# S_SRC += ${SAPI}/svchandler-m0.S  
 
 ####################################################################
 # Rules                                                            #
