@@ -6,7 +6,19 @@ and the application written in forth.
 The supervisor is supplied in binary form, and can be re-compiled
 from source with GNU GCC for arm.  
 
+-------------------------------------
+Applications:
+hello - Hello World. 
 
+-------------------------------------
+How to Build 
+- Install the MPE Lite compiler
+- Copy over the MPE Files from CortexLight 
+
+
+
+
+-------------------------------------
 Configuring the STMF0-Discovery Board
 CN4/CB5 - ST-Link Jumpers - Either
 
