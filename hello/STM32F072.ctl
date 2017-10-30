@@ -26,9 +26,9 @@ only forth definitions  decimal
 \ *[
 c" ."			setmacro AppDir		\ application files
 c" ."			setmacro HwDir		\ Board hardware files
-c" ../CortexLite"	setmacro CpuDir		\ CPU specific files
+c" ../../"	setmacro CpuDir		\ CPU specific files
 
-c" ../../sockpuppet" setmacro SockPuppet \ Sockpuppet files.
+c" ../sockpuppet" setmacro SockPuppet \ Sockpuppet files.
 
 \ *]
 
@@ -65,6 +65,37 @@ only forth definitions          \ default search order
 \ *S Configure target
 \ *******************
 
+\ ==============================
+\ *N STM32F0 variant definitions
+\ ==============================
+
+$0800:0000 equ FlashBase	\ -- addr
+\ *G Start address of Flash. The bottom 2kb (the vector area) is
+\ ** mirrored at $0000:0000 for booting.
+
+#128 kb equ /Flash	\ -- len
+\ *G Size of Flash.
+2 kb equ /FlashPage	\ -- len
+\ *G Size of a Flash Page.
+1 equ KeepPages		\ -- u
+\ *G Set this non-zero for the number of pages at the end of Flash
+\ ** that are reserved for configuration data. Often set to 1 or 2
+\ ** by systems that use PowerNet.
+FlashBase /Flash + /FlashPage KeepPages * - equ CfgFlash  \ -- len
+\ *G Base address of the configuration Flash area.
+
+$1FFF:C800 equ /InfoBase	\ -- addr
+\ *G Base address of system memory information block.
+
+#12 kb equ /SysMem		\ -- len
+\ *G Size of system memory block.
+
+$1FFF:F800 equ OptionBytes	\ -- addr
+\ *G Base address of option bytes
+#16 equ /OptionBytes		\ -- len
+\ *G Number of option bytes
+
+
 #64 cells equ /ExcVecs	\ -- len
 \ *G Size of the exception/interrupt vector table. There are
 \ ** 16 slots reserved by ARM.
@@ -86,21 +117,38 @@ only forth definitions          \ default search order
 
 
 \ *[
-  $0800:0000 $0800:7FFF cdata section Sup	\ Supervisor goes here.
+  $0800:0000 $0800:FFFF cdata section STM32F072
   data-file ../supervisor/exe/supervisor.bin
 
   \ Its necessary to pad things out.  For now...
-  $8000 swap  - allot \ CRITICAL!!!!
+  dup $8000014 ! \ Stash sup size in a reserved vector for debug
 
-  $0800:8000 $0801:FFFF cdata section STM32F072	\ code
-  $2000:2000 $2000:2FFF udata section PROGu	\ 4k UDATA RAM
-  $2000:3000 $2000:3FFF idata section PROGd	\ 4k IDATA RAM
+  $8000 swap  - allot \ Pad it out to a boundary
+
+  here $8000010 ! \ Forth address.  Save in a reserved vector
+
+  $2000:2000 $2000:27FF udata section PROGu	\ 2k UDATA RAM - tcbs
+  $2000:2800 $2000:3FFF idata section PROGd	\ 6k IDATA RAM - runtime.
 
 interpreter
 : prog STM32F072  ;		\ synonym
 target
 
 PROG PROGd PROGu  CDATA		\ use Code for HERE , and so on
+
+$0801:F000 equ INFOSTART   	\ kernel status is saved here.
+$0801:F800 equ APPSTART		\ application data is saved here.
+$0801:FFFF equ INFOEND		\ end of kernel/application status data.
+$2000:2000 equ RAMSTART		\ start of RAM
+$2000:4000 equ RAMEND		\ end of RAM
+$0800:0000 equ FLASHSTART  	\ start of Main Flash
+$0810:0000 equ FLASHEND		\ end of possible main Flash
+$0800:C000 equ APPFLASHSTART  	\ start of application flash
+$0801:F000 equ APPFLASHEND  	\ end of application flash
+APPFLASHEND APPFLASHSTART - equ /APPFLASH	\ size of application flash
+
+APPFLASHSTART TargetFlashStart	\ sets HERE at kernel start up
+
 
 \ *]
 
@@ -109,18 +157,18 @@ PROG PROGd PROGu  CDATA		\ use Code for HERE , and so on
 \ ============================
 
 \ *[
-$0F0 equ UP-SIZE		\ size of each task's user area
-$0F0 equ SP-SIZE		\ size of each task's data stack
-$0100 equ RP-SIZE		\ size of each task's return stack
+$100 equ UP-SIZE		\ size of each task's user area
+$080 equ SP-SIZE		\ size of each task's data stack
+$100 equ RP-SIZE		\ size of each task's return stack
 up-size rp-size + sp-size +
   equ task-size			\ size of TASK data area
 \ define the number of cells of guard space at the top of the data stack
 #2 equ sp-guard			\ can underflow the data stack by this amount
 
-$0100 equ TIB-LEN		\ terminal i/p buffer length
+$080 equ TIB-LEN		\ terminal i/p buffer length
 
 \ define nesting levels for interrupts and SWIs.
-1 equ #IRQs			\ number of IRQ stacks,
+0 equ #IRQs			\ number of IRQ stacks,
 				\ shared by all IRQs (1 min)
 0 equ #SVCs			\ number of SVC nestings permitted
 				\ 0 is ok if SVCs are unused
@@ -130,7 +178,7 @@ $0100 equ TIB-LEN		\ terminal i/p buffer length
 \ *N Serial and ticker rates
 \ ==========================
 
-1 equ useUSART10?	\ -- n
+1 equ useStream10?	\ -- n
 10 equ console-port	\ -- n ; Designate serial port for terminal (0..n).
 \ *G Ports 1..4 are the on-chip UARTs. The internal USB device
 \ ** is port 10, and bit-banged ports are defined from 20 onwards.
@@ -177,15 +225,20 @@ cell equ cell				\ size of a cell (16 bits)
 
 \ *[
   include %CpuDir%/CM0def		\ Cortex generic equates and SFRs
+  include %CpuDir%/sfrSTM32F072		\ STM32F072 special function registers
   include %CpuDir%/StackDef		\ Reserve default task and stacks
 PROGd  sec-top 1+ equ UNUSED-TOP  PROG	\ top of memory for UNUSED
   include %AppDir%/startSTM32F072	\ start up code
+
 l: crcslot
   0 ,					\ the kernel CRC
 l: crcstart
+
   include %CpuDir%/CodeM0lite		\ low level kernel definitions
+  include %SockPuppet%/forth/SysCalls \ System Calls.
+  include %CpuDir%/Drivers/FlashSTM32	\ Flash programming code
   include %CpuDir%/kernel72lite		\ high level kernel definitions
-\ include %CpuDir%/Drivers/rebootSTM32	\ reboot using watchdog
+  include %CpuDir%/Drivers/rebootSTM32	\ reboot using watchdog
 \  include %CpuDir%/IntCortex		\ interrupt handlers for NVIC
 \  include %CpuDir%/FaultCortex		\ fault exception handlers for NVIC
 \ *]
@@ -243,7 +296,31 @@ include %SockPuppet%/forth/serCM3_SAPI-level1 \ polled serial driver
 
  \  include %CpuDir%/include		\ include from AIDE
 
-\ RAMEND constant RP-END	\ end of available RAM
+RAMEND constant RP-END	\ end of available RAM
+
+: SIMPLECOLD          \ --
+\ *G The first high level word executed by default. This word is
+\ ** set to be the word executed at power up, but this may be
+\ ** overridden by a later use of *\fo{MAKE-TURNKEY <name>} in
+\ ** the cross-compiled code. See
+\ ** the source code for more details of *\fo{COLD}.
+  (init)                                \ start Forth
+  init-ser                              \ initialise serial line
+  console opvec !			\ default i/o channels
+  console ipvec !
+\ perform the application detection and linking
+\ cold chain actions
+[ ColdChain? ] [if]
+  WalkColdChain				\ execute user specified initialisation
+[then]
+\ sign on
+  CR .cpu .free				\ sign on, display free space
+  start-action				\ perform application start up actions
+  cr cr ."   ok"			\ display prompt
+  s0 @ sp!                              \ reset data stack
+  quit                                  \ start text interpreter
+;
+make-turnkey simplecold                       \ Default start-up word.
 
 
 \ ***************
@@ -257,12 +334,6 @@ libraries	\ to resolve common forward references
 end-libs
 
 decimal
-
-\ Add a kernel checksum
-crcstart here crcslot crc32 checksum
-/DefStart 128 > [if]
-  .( DEFSTART area too big ) abort
-[then]
 
 update-build				\ update build number file
 
