@@ -10,6 +10,7 @@
 #include "syscalls.h"
 
 #include "usbd_cdc_hooks.h"
+#include "stm32f0xx_hal.h"
 
 void* __SAPI_01_GetRuntimeData(int i) {
 	if ( i == 0 ) return(0);
@@ -98,8 +99,7 @@ void __SAPI_14_PetWatchdog(unsigned machineticks) {
 	return;
 }
 
-extern uint32_t rtc_ms;
 unsigned __SAPI_15_GetTime(tTimeType kind) {
-	return(0);
+	return(HAL_GetTick());
 }
 
