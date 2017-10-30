@@ -143,16 +143,17 @@ PROG PROGd PROGu  CDATA		\ use Code for HERE , and so on
 $0801:F000 equ INFOSTART   	\ kernel status is saved here.
 $0801:F800 equ APPSTART		\ application data is saved here.
 $0801:FFFF equ INFOEND		\ end of kernel/application status data.
-$2000:2000 equ RAMSTART		\ start of RAM
+
 $2000:4000 equ RAMEND		\ end of RAM
+
 $0800:0000 equ FLASHSTART  	\ start of Main Flash
-$0810:0000 equ FLASHEND		\ end of possible main Flash
+$0801:FFFF equ FLASHEND		\ end of possible main Flash
+
 $0800:C000 equ APPFLASHSTART  	\ start of application flash
 $0801:F000 equ APPFLASHEND  	\ end of application flash
 APPFLASHEND APPFLASHSTART - equ /APPFLASH	\ size of application flash
 
 APPFLASHSTART TargetFlashStart	\ sets HERE at kernel start up
-
 
 \ *]
 
@@ -302,31 +303,6 @@ include %SockPuppet%/forth/serCM3_SAPI-level1 \ polled serial driver
 
 RAMEND constant RP-END	\ end of available RAM
 
-: SIMPLECOLD          \ --
-\ *G The first high level word executed by default. This word is
-\ ** set to be the word executed at power up, but this may be
-\ ** overridden by a later use of *\fo{MAKE-TURNKEY <name>} in
-\ ** the cross-compiled code. See
-\ ** the source code for more details of *\fo{COLD}.
-  (init)                                \ start Forth
-  init-ser                              \ initialise serial line
-  console opvec !			\ default i/o channels
-  console ipvec !
-\ perform the application detection and linking
-\ cold chain actions
-[ ColdChain? ] [if]
-  WalkColdChain				\ execute user specified initialisation
-[then]
-\ sign on
-  CR .cpu .free				\ sign on, display free space
-  start-action				\ perform application start up actions
-  cr cr ."   ok"			\ display prompt
-  s0 @ sp!                              \ reset data stack
-  quit                                  \ start text interpreter
-;
-make-turnkey simplecold                       \ Default start-up word.
-
-
 \ ***************
 \ *S Finishing up
 \ ***************
@@ -338,6 +314,12 @@ libraries	\ to resolve common forward references
 end-libs
 
 decimal
+
+\ Add a kernel checksum
+crcstart here crcslot crc32 checksum
+/DefStart 128 > [if]
+  .( DEFSTART area too big ) abort
+[then]
 
 update-build				\ update build number file
 
