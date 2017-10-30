@@ -67,8 +67,9 @@ init-s0 tos-cached? sp-guard + cells -
 \ ** All the GPIO blocks are enabled.
   begin
     \ INT_STACK_TOP SP_main sys!		\ set SP_main for interrupts
-    INIT-R0 SP_process sys!		\ set SP_process for tasks
-    2 control sys!			\ switch to SP_process
+    \ INIT-R0 SP_process sys!		\ set SP_process for tasks
+    \ 2 control sys!			\ switch to SP_process
+    \ Don't mess with the stack pointers.  The launcher will handle it.
     REAL-INIT-S0 set-sp			\ Allow for cached TOS and guard space
     INIT-U0 up!				\ USER area
     CLD1 @ execute
