@@ -1,3 +1,6 @@
 [submodule "supervisor/cm3lib"]
 	path = supervisor/cm3lib
 	url = https://github.com/rbsexton/cm3lib.git
+[submodule "sockpuppet"]
+	path = sockpuppet
+	url = https://github.com/rbsexton/sockpuppet.git
