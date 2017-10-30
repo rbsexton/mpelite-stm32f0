@@ -123,7 +123,11 @@ $1FFF:F800 equ OptionBytes	\ -- addr
   \ Its necessary to pad things out.  For now...
   dup $8000014 ! \ Stash sup size in a reserved vector for debug
 
-  $8000 swap  - allot \ Pad it out to a boundary
+  \ Pad it out to a 1k size.
+  $3ff and  
+  $400 swap  -  \ Size
+  
+  allot \ Pad it out to a boundary
 
   here $8000010 ! \ Forth address.  Save in a reserved vector
 

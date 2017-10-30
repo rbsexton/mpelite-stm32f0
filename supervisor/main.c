@@ -121,7 +121,10 @@ int main(void)
 		USBPutChar(10,c,0);
 		}
 #endif
-	LaunchUserAppThread( (unsigned long *) 0x8008000,0);
+	// Look up the address of forth.  Its stashed in the 
+	// 4th word of memory - placed there by the vfx compiler
+	// as directed in the vfx config file.
+	LaunchUserAppThread( ((unsigned long *) 0x8000000)[4],0);
 	if (GetCharAvail(10)) {
 		int c = GetChar(10,0);
 		PutChar(10,c,0);
@@ -266,7 +269,7 @@ void Toggle_Leds(void)
 void assert_failed(uint8_t* file, uint32_t line)
 { 
   /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+     example: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 
   /* Infinite loop */
   while (1)
