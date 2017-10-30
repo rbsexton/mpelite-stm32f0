@@ -63,6 +63,8 @@ a newline or the buffer fills up.
 #include "main.h"
 
 #include "ringbuffer.h"
+#include "usbd_cdc_hooks.h"
+#include "blocking.h"
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
   * @{
@@ -135,21 +137,40 @@ USBD_CDC_ItfTypeDef USBD_CDC_fops =
 };
 
 
+unsigned long usb_ticker = 0;
+unsigned long usb_ticker_lastxmit = 0;
+sIOBlockingData blocking;
+
 int USBGetCharAvail(int stream) {
 	return(ringbuffer_used(&rb_ep_OUT) );
 	}
 	
 int USBGetChar(int stream,unsigned long *tcb) {
-	return(ringbuffer_getchar(&rb_ep_OUT));
+	int result = ringbuffer_getchar(&rb_ep_OUT);
+     
+     if ( result == -1 ) {
+             blocking.tcb = tcb;
+             blocking.blocked_rx = true;
+             blocking.blocked_count_rx++;            
+             if ( tcb ) FORTH_THREAD_STOP(&blocking);
+             }
+     
+     return(result);
+     }
+    
+bool USBPutChar(int stream, uint8_t c, unsigned long *tcb) {	
+	int free = ringbuffer_addchar(&rb_ep_IN,c);
+
+    // If we're maxing out, tell the caller to yield.
+    if ( free == 0 ) { // Let it fill up.  No flow control chars in the ringbuffer.
+            blocking.tcb = tcb;
+            blocking.blocked_tx = true;
+            blocking.blocked_count_tx++;            
+            if ( tcb ) FORTH_THREAD_STOP(&blocking);
+            return(true);           
+            }
+    else return(false);     
 	}
-
-bool USBPutChar(int stream, uint8_t c, unsigned long *tcb) {
-	bool ret = (ringbuffer_addchar(&rb_ep_IN, c) == 0);
-	return(ret);
-	}
-
-	
-
 
 /* Private functions ---------------------------------------------------------*/
 
@@ -309,19 +330,32 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   // uint32_t buffptr;
   // uint32_t buffsize;
+  usb_ticker++;
+  unsigned int elapsed = usb_ticker - usb_ticker_lastxmit;
 
-  if ( ringbuffer_used(&rb_ep_IN) ) {
-	// Try and take a maximal bite.
+  if ( ringbuffer_free(&rb_ep_IN) < 4 || 
+	   ( ringbuffer_used(&rb_ep_IN) && elapsed > 1) ) {
+		
 	int count = ringbuffer_getbulkcount(&rb_ep_IN);
-	USBD_CDC_SetTxBuffer(&USBD_Device,
-	 		ringbuffer_getbulkpointer(&rb_ep_IN),
-			count);
+	while ( count ) {
+		USBD_CDC_SetTxBuffer(&USBD_Device,
+		 		ringbuffer_getbulkpointer(&rb_ep_IN),
+				count);
 
-	// On Successful transmission pull it from the buffer.
-	if(USBD_CDC_TransmitPacket(&USBD_Device) == USBD_OK) {
-		ringbuffer_bulkremove(&rb_ep_IN,count);
+		// On Successful transmission pull it from the buffer.
+		if(USBD_CDC_TransmitPacket(&USBD_Device) == USBD_OK) {
+			usb_ticker_lastxmit = usb_ticker;
+			ringbuffer_bulkremove(&rb_ep_IN,count);
+			if (blocking.blocked_tx == true) {
+				blocking.blocked_tx = false;
+				FORTH_THREAD_START(&blocking);
+				}
+			}
+		else break;
+		
+		ringbuffer_getbulkcount(&rb_ep_IN);
 		}
-
+		
 	BSP_LED_Toggle(LED_RED);
 	}
 			
@@ -404,6 +438,10 @@ static int8_t CDC_Itf_Receive(uint8_t* Buf, uint32_t *Len)
 			}
 		// Now we've moved the data, ask for more.
 		USBD_CDC_ReceivePacket(&USBD_Device);
+		if (blocking.blocked_rx == true) {
+			blocking.blocked_rx = false;
+			FORTH_THREAD_START(&blocking);
+			}
 		}
 	else {
 		// We wind up here if there is no space available.

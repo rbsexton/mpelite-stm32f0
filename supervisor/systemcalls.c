@@ -9,6 +9,8 @@
 
 #include "syscalls.h"
 
+#include "usbd_cdc_hooks.h"
+
 void* __SAPI_01_GetRuntimeData(int i) {
 	if ( i == 0 ) return(0);
 	else return(0);
@@ -24,7 +26,7 @@ bool __SAPI_02_PutChar(int stream, uint8_t c, unsigned long *tcb) {
 	int ret;
 	switch ( stream ) {
 		case 10:
-			return(USBPutChar(stream-10, c));
+			return(USBPutChar(stream-10, c,tcb));
 			break;
 		default:
 			ret = 0;

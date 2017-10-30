@@ -50,7 +50,7 @@
 
 #include "ringbuffer.h"
 #include "syscall-testshims.h"
-
+#include "bl_launcher.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -121,7 +121,7 @@ int main(void)
 		USBPutChar(10,c,0);
 		}
 #endif
-
+	LaunchUserAppThread( (unsigned long *) 0x8008000,0);
 	if (GetCharAvail(10)) {
 		int c = GetChar(10,0);
 		PutChar(10,c,0);
