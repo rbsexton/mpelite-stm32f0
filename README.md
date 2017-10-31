@@ -27,7 +27,7 @@ For Linux and Mac, you can use dfu-util.
 
 1. Connect the BOOT0 pin to VDD with a jumper and reset the board.
 2. Remove the jumper.  The board will stay in DFU mode.
-3. Launch your dfu utility. Example: *dfu-util -s 0x8000000 -a 0 -D exe/supervisor.bin*
+3. Launch your dfu utility. Example: *dfu-util -s 0x8000000 -a 0 -D STM32F072.img*
 4. After the board loads the image, press the reset button and connect to it with your
    terminal emulator.
 
