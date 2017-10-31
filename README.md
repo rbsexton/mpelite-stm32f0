@@ -6,25 +6,21 @@ and the application written in forth.
 The supervisor is supplied in binary form, and can be re-compiled
 from source with GNU GCC for arm.   See the supervisor dir for details
 
-How to Install:
+## How to Install
 - Install the MPE Lite compiler
-Clone this into the MPELight CortexLite Directory, along with the submodules:
+- Clone this into the MPELight CortexLite Directory, along with the submodules:
+  - git clone --recursive https://github.com/rbsexton/mpelite-stm32f0.git
 
-git clone --recursive https://github.com/rbsexton/mpelite-stm32f0.git
+## Applications:
+hello : Hello World.  No features to speak of, just a prompt.
 
--------------------------------------
-Applications:
-hello - Hello World. 
-
--------------------------------------
-How to Build.   Wine:
-
-Start Wine Shell.
-cd ./xArmCortexLite/CortexLite/mpelite-stm32f0/hello
-wine <path>/xArmCortexLite.exe include STM32F072.ctl
+## How to Build with Wine:
+- Start Wine Shell.
+- cd ./xArmCortexLite/CortexLite/mpelite-stm32f0/hello
+- wine <path>/xArmCortexLite.exe include STM32F072.ctl
 
 
------------------ Flashing images  ---------------------
+## Flashing images 
 You'll need some sort of tool for installing images via DFU.
 
 For Linux and Mac, you can use dfu-util.  Example Usage:
