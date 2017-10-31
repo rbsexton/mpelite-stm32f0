@@ -1,5 +1,13 @@
 This is the sockpuppet supervisor layer.  
 
+Release 0.1
+ Basic feature set.  Supports a single USB-CDC channel on stream 10,
+ with blocking IO
+
+
+------------------------------------------------
+
+
 Its derived from the ST Micro Cube distribution: STM32Cube_FW_F0_V1.8.0
 
 The supervisor itself is derived from 
@@ -7,7 +15,6 @@ Projects/STM32072B_EVAL/Applications/USB_Device/CDC_Standalone
 
 ----------------- Flashing images  ---------------------
 dfu-util is open source
-
 dfu-util -s 0x8000000 -a 0 -D exe/supervisor.bin
 
 
