@@ -118,7 +118,8 @@ $1FFF:F800 equ OptionBytes	\ -- addr
 
 \ *[
   $0800:0000 $0800:FFFF cdata section STM32F072
-  data-file ../supervisor/exe/supervisor.bin
+  \ data-file ../supervisor/exe/supervisor.bin
+  data-file ../supervisor/binaries/supervisor_0.1.bin
 
   \ Its necessary to pad things out.  For now...
   dup $8000014 ! \ Stash sup size in a reserved vector for debug

@@ -4,31 +4,41 @@ layer for interfacing between the board-support layer (supervisor)
 and the application written in forth.
 
 The supervisor is supplied in binary form, and can be re-compiled
-from source with GNU GCC for arm.  
+from source with GNU GCC for arm.   See the supervisor dir for details
+
+How to Install:
+- Install the MPE Lite compiler
+Clone this into the MPELight CortexLite Directory, along with the submodules:
+
+git clone --recursive https://github.com/rbsexton/mpelite-stm32f0.git
 
 -------------------------------------
 Applications:
 hello - Hello World. 
 
 -------------------------------------
-How to Build 
-- Install the MPE Lite compiler
-- Copy over the MPE Files from CortexLight 
+How to Build.   Wine:
+
+Start Wine Shell.
+cd ./xArmCortexLite/CortexLite/mpelite-stm32f0/hello
+wine <path>/xArmCortexLite.exe include STM32F072.ctl
 
 
+----------------- Flashing images  ---------------------
+You'll need some sort of tool for installing images via DFU.
 
+For Linux and Mac, you can use dfu-util.  Example Usage:
+dfu-util -s 0x8000000 -a 0 -D exe/supervisor.bin
 
--------------------------------------
-Configuring the STMF0-Discovery Board
-CN4/CB5 - ST-Link Jumpers - Either
+Connect the BOOT0 pin to VDD with a jumper and reset the board.
+After the board starts up, you may remove the jumper.
 
-Hook up USB-User
+Run your DFU utility and press the reset button
 
 
 
 
 Advanced features - 
-Supports run-time installation of interrupt vectors.
 Supports run-time installation of system calls.
 
 
