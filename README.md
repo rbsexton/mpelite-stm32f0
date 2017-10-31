@@ -23,15 +23,18 @@ hello : Hello World.  No features to speak of, just a prompt.
 ## Flashing images 
 You'll need some sort of tool for installing images via DFU.
 
-For Linux and Mac, you can use dfu-util.  Example Usage:
-dfu-util -s 0x8000000 -a 0 -D exe/supervisor.bin
+For Linux and Mac, you can use dfu-util.
 
-Connect the BOOT0 pin to VDD with a jumper and reset the board.
-After the board starts up, you may remove the jumper.
+1. Connect the BOOT0 pin to VDD with a jumper and reset the board.
+2. Remove the jumper.  The board will stay in DFU mode.
+3. Launch your dfu utility. Example: *dfu-util -s 0x8000000 -a 0 -D exe/supervisor.bin*
+4. After the board loads the image, press the reset button and connect to it with your
+   terminal emulator.
 
-Run your DFU utility and press the reset button
+# Communicating with the board
 
-
+The board supervisor contains a USB CDC driver and acts like a serial port.  Connect to it
+with the terminal emulator of your choice.
 
 
 Advanced features - 
