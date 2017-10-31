@@ -32,7 +32,7 @@ SAPI=../sockpuppet/sapi
 # Change path to the tools according to your system configuration
 # DO NOT add trailing whitespace chars, they do matter !
 WINDOWSCS  ?= GNU Tools ARM Embedded\4.9 2015q1
-LINUXCS    ?= ~/gcc-arm-none-eabi-4_8-2014q3
+LINUXCS    ?= ~/gcc-arm-none-eabi-5_4-2016q3
 
 RMDIRS     := rm -rf
 RMFILES    := rm -rf
