@@ -2,23 +2,26 @@ This is the sockpuppet supervisor layer.
 
 Release 0.1
  Basic feature set.  Supports a single USB-CDC channel on stream 10,
- with blocking IO
-
+ with blocking IO and support for TICKS.  The USB interface is rudimentary,
+ and contains no performance enhancements.
 
 ------------------------------------------------
 
-
-Its derived from the ST Micro Cube distribution: STM32Cube_FW_F0_V1.8.0
+Derived from the ST Micro Cube distribution: STM32Cube_FW_F0_V1.8.0
 
 The supervisor itself is derived from 
 Projects/STM32072B_EVAL/Applications/USB_Device/CDC_Standalone
 
------------------ Flashing images  ---------------------
-dfu-util is open source
-dfu-util -s 0x8000000 -a 0 -D exe/supervisor.bin
+----------------- Building the Supervisor --------------
+Pre-built ARM gcc toolchains are avaiable here:
 
+https://launchpad.net/gcc-arm-embedded
 
------------------ Notes about conversion ---------------------
+Note that the path to gcc is embedded in the makefile
+
+--------------------------------------------------------
+Conversion from the ST CDC Demo to Sockpuppet
+
 The ST libs use a UART Transmission complete callback.   This
 triggers the Nextpacket process - acceptance of USB OUT Packets.
 
@@ -33,6 +36,5 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 ST's Libary uses a timer to trigger transmission:
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {}
-
 
 
